@@ -34,7 +34,7 @@ class YoloLoss(nn.Module):
     def forward(self, predictions, target):
         # predictions are shaped (BATCH_SIZE, S*S(C+B*5) when inputted
         predictions = predictions.reshape(-1, self.S, self.S, self.C + self.B * 5)
-
+        print(predictions.size())
         # Calculate IoU for the two predicted bounding boxes with target bbox
         iou_b1 = intersection_over_union(predictions[..., 21:25], target[..., 21:25])
         iou_b2 = intersection_over_union(predictions[..., 26:30], target[..., 21:25])
