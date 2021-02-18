@@ -19,6 +19,8 @@ class VOCDataset(torch.utils.data.Dataset):
         self.S = S
         self.B = B
         self.C = C
+        print(self.annotations.iloc[0, 1])
+        print(self.annotations.iloc[0, 0])
 
     def __len__(self):
         return len(self.annotations)

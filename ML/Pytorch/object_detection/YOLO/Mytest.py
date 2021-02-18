@@ -30,20 +30,58 @@ optimizer = optim.Adam(
 loss_fn = YoloLoss()
 
 
-def train_fn(model, optimizer, loss_fn):
+IMG_DIR = "data/images"
+LABEL_DIR = "data/labels"
+NUM_WORKERS = 0
+BATCH_SIZE = 1
+PIN_MEMORY = True
+
+class Compose(object):
+    def __init__(self, transforms):
+        self.transforms = transforms
+
+    def __call__(self, img, bboxes):
+        for t in self.transforms:
+            img, bboxes = t(img), bboxes
+
+        return img, bboxes
+
+
+transform = Compose([transforms.Resize((448, 448)), transforms.ToTensor(),])
+
+test_dataset = VOCDataset(
+    "data/test.csv", transform=transform, img_dir=IMG_DIR, label_dir=LABEL_DIR,
+)
+
+test_dataset.__getitem__(0)
+
+test_loader = DataLoader(
+        dataset=test_dataset,
+        batch_size=BATCH_SIZE,
+        num_workers=NUM_WORKERS,
+        pin_memory=PIN_MEMORY,
+        shuffle=True,
+        drop_last=True,
+    )
+def train_fn(train_loader, model, optimizer, loss_fn):
+
     mean_loss = []
-    x = torch.rand(1, 3, 448, 448)
-    y = torch.rand(1, 7, 7, 30)
-    x, y = x.to(DEVICE), y.to(DEVICE)
-    out = model(x)
-    print(out)
-    print(out.size())
-    loss = loss_fn(out, y)
-    mean_loss.append(loss.item())
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
+
+    for batch_idx, (x, y) in enumerate(train_loader):
+        # print(x.size())
+        # print(y.size())
+
+        x, y = x.to(DEVICE), y.to(DEVICE)
+        out = model(x)
+        # print(out)
+        # print(out.size())
+        loss = loss_fn(out, y)
+        mean_loss.append(loss.item())
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
     print(f"Mean loss was {sum(mean_loss)/len(mean_loss)}")
 
-train_fn(model,optimizer,loss_fn)
+for i in range(300):
+    train_fn(test_loader, model,optimizer,loss_fn)
